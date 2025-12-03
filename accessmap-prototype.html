@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AccessMap San Miguel - Reporte de Barreras Urbanas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #00BFFF 0%, #4A90E2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #00BFFF, #4A90E2);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-points {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+        }
+
+        .tab.active {
+            background: white;
+            color: #00BFFF;
+            border-bottom: 3px solid #00BFFF;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #003D5C;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #003D5C;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #00BFFF;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,191,255,0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #FFD700;
+            color: #003D5C;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ranking-list {
+            list-style: none;
+        }
+
+        .ranking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank-number {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .chatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .chatbot-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.1);
+        }
+
+        .chatbot-window {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chatbot-window.active {
+            display: flex;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.bot {
+            background: white;
+            margin-right: auto;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            margin-left: auto;
+        }
+
+        .chatbot-input {
+            display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        .chatbot-input button {
+            background: linear-gradient(135deg, #00BFFF, #4A90E2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .report-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .report-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #00BFFF;
+        }
+
+        .report-item h4 {
+            color: #003D5C;
+            margin-bottom: 5px;
+        }
+
+        .report-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .status-pending {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-progress {
+            background: #D1ECF1;
+            color: #0C5460;
+        }
+
+        .status-resolved {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .survey-question {
+            margin-bottom: 20px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 10px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .star {
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .star.active {
+            color: #FFD700;
+        }
+
+        @media (max-width: 968px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span>🏛️</span>
+            <span>AccessMap San Miguel</span>
+        </div>
+        <div class="user-points">
+            <span>⭐</span>
+            <span id="userPoints">250 puntos</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('map')">🗺️ Mapa</button>
+                <button class="tab" onclick="switchTab('reports')">📋 Reportes</button>
+                <button class="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab" onclick="switchTab('survey')">📝 Encuesta</button>
+            </div>
+
+            <div id="mapTab" class="tab-content active">
+                <div id="map"></div>
+                <p style="margin-top: 15px; color: #666;">
+                    <strong>📍 Instrucciones:</strong> Haz clic en el mapa para agregar un reporte de barrera urbana en esa ubicación.
+                </p>
+            </div>
+
+            <div id="reportsTab" class="tab-content">
+                <h2 style="color: #003D5C; margin-bottom: 20px;">Mis Reportes</h2>
+                <div class="report-list">
+                    <div class="report-item">
+                        <h4>Rampa en mal estado</h4>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Av. La Marina 2000</p>
+                        <p style="font-size: 13px; margin: 5px 0;">Reportado hace 2 días</p>
+                        <span class="report-status status-progress">En Progreso</span>
+                    </div>
+                    <div class="report-item">
+                        <h4>Falta de señalización táctil</h4>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Plaza San Miguel</p>
+                        <p style="font-size: 13px; margin: 5px 0;">Reportado hace 5 días</p>
+                        <span class="report-status status-pending">Pendiente</span>
+                    </div>
+                    <div class="report-item">
+                        <h4>Baño sin accesibilidad</h4>
+                        <p style="color: #666; font-size: 14px; margin: 5px 0;">Centro Comercial Plaza Norte</p>
+                        <p style="font-size: 13px; margin: 5px 0;">Reportado hace 1 semana</p>
+                        <span class="report-status status-resolved">Resuelto</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dashboardTab" class="tab-content">
+                <h2 style="color: #003D5C; margin-bottom: 20px;">Dashboard Municipal</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Reportes Totales</div>
+                        <div class="stat-number">347</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Resueltos</div>
+                        <div class="stat-number">218</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">En Progreso</div>
+                        <div class="stat-number">89</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Usuarios Activos</div>
+                        <div class="stat-number">1,234</div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #003D5C; margin-bottom: 15px;">Zonas con Más Reportes</h3>
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong>1. Av. La Marina</strong> - 45 reportes
+                            <div style="background: #00BFFF; height: 8px; width: 90%; border-radius: 4px; margin-top: 5px;"></div>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <strong>2. Plaza San Miguel</strong> - 32 reportes
+                            <div style="background: #4A90E2; height: 8px; width: 64%; border-radius: 4px; margin-top: 5px;"></div>
+                        </div>
+                        <div>
+                            <strong>3. Av. Universitaria</strong> - 28 reportes
+                            <div style="background: #003D5C; height: 8px; width: 56%; border-radius: 4px; margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="surveyTab" class="tab-content">
+                <h2 style="color: #003D5C; margin-bottom: 20px;">Encuesta de Satisfacción</h2>
+                <div class="survey-question">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #003D5C;">
+                        ¿Qué tan fácil fue reportar una barrera?
+                    </label>
+                    <div class="rating-stars" id="easeRating">
+                        <span class="star" onclick="rate('ease', 1)">★</span>
+                        <span class="star" onclick="rate('ease', 2)">★</span>
+                        <span class="star" onclick="rate('ease', 3)">★</span>
+                        <span class="star" onclick="rate('ease', 4)">★</span>
+                        <span class="star" onclick="rate('ease', 5)">★</span>
+                    </div>
+                </div>
+                <div class="survey-question">
+                    <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #003D5C;">
+                        ¿Qué tan satisfecho estás con el tiempo de respuesta?
+                    </label>
+                    <div class="rating-stars" id="responseRating">
+                        <span class="star" onclick="rate('response', 1)">★</span>
+                        <span class="star" onclick="rate('response', 2)">★</span>
+                        <span class="star" onclick="rate('response', 3)">★</span>
+                        <span class="star" onclick="rate('response', 4)">★</span>
+                        <span class="star" onclick="rate('response', 5)">★</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Comentarios y Sugerencias</label>
+                    <textarea rows="4" placeholder="Cuéntanos tu experiencia..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="submitSurvey()">Enviar Encuesta</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h3>📍 Nuevo Reporte</h3>
+                <div class="form-group">
+                    <label>Tipo de Barrera</label>
+                    <select id="barrierType">
+                        <option>Rampa inaccesible</option>
+                        <option>Sin señalización</option>
+                        <option>Baño no adaptado</option>
+                        <option>Iluminación deficiente</option>
+                        <option>Obstáculo en vía</option>
+                        <option>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="description" rows="3" placeholder="Describe el problema..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Foto (opcional)</label>
+                    <input type="file" accept="image/*">
+                </div>
+                <button class="btn-primary" onclick="submitReport()">Enviar Reporte</button>
+            </div>
+
+            <div class="card">
+                <h3>🏆 Tu Progreso</h3>
+                <div style="text-align: center; margin: 20px 0;">
+                    <div class="badge">⭐ Ciudadano Activo</div>
+                    <p style="margin-top: 15px; color: #666;">Has reportado <strong>8 barreras</strong></p>
+                    <p style="color: #666;">Próximo nivel: 12 reportes</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🥇 Ranking Top 5</h3>
+                <ul class="ranking-list">
+                    <li class="ranking-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="rank-number">1</div>
+                            <span>María S.</span>
+                        </div>
+                        <strong>450 pts</strong>
+                    </li>
+                    <li class="ranking-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="rank-number">2</div>
+                            <span>Carlos R.</span>
+                        </div>
+                        <strong>380 pts</strong>
+                    </li>
+                    <li class="ranking-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="rank-number">3</div>
+                            <span>Tú</span>
+                        </div>
+                        <strong>250 pts</strong>
+                    </li>
+                    <li class="ranking-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="rank-number">4</div>
+                            <span>Ana P.</span>
+                        </div>
+                        <strong>230 pts</strong>
+                    </li>
+                    <li class="ranking-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="rank-number">5</div>
+                            <span>José L.</span>
+                        </div>
+                        <strong>210 pts</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="chatbot">
+        <button class="chatbot-button" onclick="toggleChat()">💬</button>
+        <div class="chatbot-window" id="chatWindow">
+            <div class="chatbot-header">
+                <div>
+                    <strong>🤖 Asistente AccessMap</strong>
+                    <div style="font-size: 12px; opacity: 0.9;">En línea</div>
+                </div>
+                <button onclick="toggleChat()" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            <div class="chatbot-messages" id="chatMessages">
+                <div class="message bot">
+                    ¡Hola! 👋 Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?
+                </div>
+                <div class="message bot">
+                    Puedo ayudarte con:
+                    <br>• Cómo hacer un reporte
+                    <br>• Ver tus puntos y ranking
+                    <br>• Contactar con la municipalidad
+                    <br>• Responder dudas sobre accesibilidad
+                </div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatInput" placeholder="Escribe tu mensaje...">
+                <button onclick="sendMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // Inicializar mapa
+        const map = L.map('map').setView([-12.0764, -77.0869], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Marcadores de ejemplo
+        const reports = [
+            {lat: -12.0764, lng: -77.0869, type: 'Rampa inaccesible', status: 'pending'},
+            {lat: -12.0734, lng: -77.0839, type: 'Sin señalización', status: 'progress'},
+            {lat: -12.0794, lng: -77.0899, type: 'Baño no adaptado', status: 'resolved'}
+        ];
+
+        reports.forEach(report => {
+            const color = report.status === 'resolved' ? 'green' : 
+                         report.status === 'progress' ? 'orange' : 'red';
+            L.circleMarker([report.lat, report.lng], {
+                color: color,
+                fillColor: color,
+                fillOpacity: 0.7,
+                radius: 8
+            }).addTo(map).bindPopup(`<strong>${report.type}</strong><br>Estado: ${report.status}`);
+        });
+
+        // Click en el mapa para nuevo reporte
+        map.on('click', function(e) {
+            L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
+                .bindPopup('📍 Nuevo reporte aquí').openPopup();
+        });
+
+        // Funciones de navegación
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Chatbot
+        function toggleChat() {
+            document.getElementById('chatWindow').classList.toggle('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const messages = document.getElementById('chatMessages');
+            
+            if (input.value.trim()) {
+                // Mensaje del usuario
+                const userMsg = document.createElement('div');
+                userMsg.className = 'message user';
+                userMsg.textContent = input.value;
+                messages.appendChild(userMsg);
+                
+                // Respuesta del bot
+                setTimeout(() => {
+                    const botMsg = document.createElement('div');
+                    botMsg.className = 'message bot';
+                    botMsg.textContent = '¡Entendido! Un operador de la Gerencia de Desarrollo Social revisará tu consulta en breve. 🏛️';
+                    messages.appendChild(botMsg);
+                    messages.scrollTop = messages.scrollHeight;
+                }, 1000);
+                
+                input.value = '';
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+
+        // Envío de reporte
+        function submitReport() {
+            const type = document.getElementById('barrierType').value;
+            const desc = document.getElementById('description').value;
+            
+            if (desc) {
+                alert('✅ ¡Reporte enviado con éxito!\n\n+30 puntos ganados 🎉\n\nLa municipalidad ha sido notificada.');
+                document.getElementById('description').value = '';
+                
+                // Actualizar puntos
+                const currentPoints = parseInt(document.getElementById('userPoints').textContent);
+                document.getElementById('userPoints').textContent = (currentPoints + 30) + ' puntos';
+            } else {
+                alert('Por favor completa la descripción del reporte.');
+            }
+        }
+
+        // Sistema de calificación
+        function rate(type, stars) {
+            const container = type === 'ease' ? 'easeRating' : 'responseRating';
+            const starElements = document.getElementById(container).getElementsByClassName('star');
+            
+            for (let i = 0; i < starElements.length; i++) {
+                if (i < stars) {
+                    starElements[i].classList.add('active');
+                } else {
+                    starElements[i].classList.remove('active');
+                }
+            }
+        }
+
+        // Envío de encuesta
+        function submitSurvey() {
+            alert('✅ ¡Gracias por tu feedback!\n\n+20 puntos ganados 🎉\n\nTu opinión nos ayuda a mejorar.');
+            
+            // Actualizar puntos
+            const currentPoints = parseInt(document.getElementById('userPoints').textContent);
+            document.getElementById('userPoints').textContent = (currentPoints + 20) + ' puntos';
+        }
+
+        // Enter en chatbot
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
